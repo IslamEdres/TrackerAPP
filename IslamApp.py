@@ -5,11 +5,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from tkcalendar import DateEntry
 import pandas as pd
-import datetime
-import socket
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#ADD      
+
 # Function to execute the remote script on the server using SSH
 def execute_remote_script(server_ip, port, username, password, script_path):
     try:
@@ -68,7 +64,7 @@ def monitor_servers(live=False):
             thread.join()
 
         if live:
-            root.after(1, lambda: monitor_servers(live=True))
+            root.after(1000, lambda: monitor_servers(live=True))  # Set a 1-second delay for live monitoring
 
     threading.Thread(target=monitor_loop, daemon=True).start()
 
@@ -170,6 +166,7 @@ def add_server():
         password_entry.delete(0, tk.END)
 
         messagebox.showinfo("Success", f"Server {server_name} added successfully!")
+        fetch_servers()
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to connect to {server_ip}: {str(e)}")
@@ -234,73 +231,78 @@ def show_report_window():
 
         conn.close()
 
-    report_button = tk.Button(report_window, text="Generate Report", command=generate_report)
-    report_button.pack(pady=10)
-
-    report_output = tk.Text(report_window, height=10, width=50)
+    tk.Button(report_window, text="Generate Report", command=generate_report).pack(pady=10)
+    report_output = tk.Text(report_window, wrap=tk.WORD, width=60, height=20)
     report_output.pack(padx=10, pady=10)
 
-# Initialize the main window
+# Create the main window
 root = tk.Tk()
-root.title("Call Monitoring Application")
+root.title("Server Monitoring Application")
 
-# Create a frame for server management
+# Set up the menu bar
+menubar = tk.Menu(root)
+
+# Create File menu
+file_menu = tk.Menu(menubar, tearoff=0)
+file_menu.add_command(label="Add Server", command=add_server)
+file_menu.add_command(label="Clear Data", command=clear_data)
+file_menu.add_separator()
+file_menu.add_command(label="Exit", command=root.quit)
+menubar.add_cascade(label="File", menu=file_menu)
+
+# Create Monitor menu
+monitor_menu = tk.Menu(menubar, tearoff=0)
+monitor_menu.add_command(label="Start Monitoring", command=lambda: monitor_servers(live=False))
+monitor_menu.add_command(label="Start Live Monitoring", command=lambda: monitor_servers(live=True))
+
+menubar.add_cascade(label="Monitor", menu=monitor_menu)
+
+# Create Reports menu
+reports_menu = tk.Menu(menubar, tearoff=0)
+reports_menu.add_command(label="Show Reports", command=show_report_window)
+menubar.add_cascade(label="Reports", menu=reports_menu)
+
+root.config(menu=menubar)
+
+# Frame for server checkbuttons
 server_frame = tk.Frame(root)
 server_frame.pack(pady=10)
 
-# Entry fields for server credentials
-tk.Label(root, text="Server Name").pack()
-server_name_entry = tk.Entry(root)
-server_name_entry.pack(pady=5)
+# Frame for server input fields
+input_frame = tk.Frame(root)
+input_frame.pack(pady=10)
 
-tk.Label(root, text="Server IP").pack()
-server_ip_entry = tk.Entry(root)
-server_ip_entry.pack(pady=5)
+tk.Label(input_frame, text="Server Name").grid(row=0, column=0)
+server_name_entry = tk.Entry(input_frame)
+server_name_entry.grid(row=0, column=1)
 
-tk.Label(root, text="Port").pack()
-port_entry = tk.Entry(root)
-port_entry.pack(pady=5)
+tk.Label(input_frame, text="Server IP").grid(row=1, column=0)
+server_ip_entry = tk.Entry(input_frame)
+server_ip_entry.grid(row=1, column=1)
 
-tk.Label(root, text="Username").pack()
-username_entry = tk.Entry(root)
-username_entry.pack(pady=5)
+tk.Label(input_frame, text="Port").grid(row=2, column=0)
+port_entry = tk.Entry(input_frame)
+port_entry.grid(row=2, column=1)
 
-tk.Label(root, text="Password").pack()
-password_entry = tk.Entry(root, show='*')
-password_entry.pack(pady=5)
+tk.Label(input_frame, text="Username").grid(row=3, column=0)
+username_entry = tk.Entry(input_frame)
+username_entry.grid(row=3, column=1)
 
-# Button frame for adding and clearing servers
-button_frame = tk.Frame(root)
-button_frame.pack(pady=10)
+tk.Label(input_frame, text="Password").grid(row=4, column=0)
+password_entry = tk.Entry(input_frame, show='*')
+password_entry.grid(row=4, column=1)
 
-add_button = tk.Button(button_frame, text="Add Server", command=add_server)
-add_button.pack(side=tk.LEFT, padx=5)
+tk.Button(input_frame, text="Add Server", command=add_server).grid(row=5, columnspan=2, pady=10)
 
-clear_button = tk.Button(button_frame, text="Clear Data", command=clear_data)
-clear_button.pack(side=tk.LEFT, padx=5)
-
-fetch_servers_button = tk.Button(button_frame, text="Fetch Servers", command=fetch_servers)
-fetch_servers_button.pack(side=tk.LEFT, padx=5)
-
-# Dashboard buttons frame
-dashboard_frame = tk.Frame(root)
-dashboard_frame.pack(pady=10)
-
-monitor_button = tk.Button(dashboard_frame, text="Monitor", command=lambda: monitor_servers(live=False))
-monitor_button.pack(side=tk.LEFT, padx=5)
-
-live_monitor_button = tk.Button(dashboard_frame, text="Live Monitor", command=lambda: monitor_servers(live=True))
-live_monitor_button.pack(side=tk.LEFT, padx=5)
-
-report_button = tk.Button(dashboard_frame, text="Show Report", command=show_report_window)
-report_button.pack(side=tk.LEFT, padx=5)
-
-# Text widget to display monitoring results
-result_text = tk.Text(root, height=20, width=70)
+# Text area for displaying results
+result_text = tk.Text(root, wrap=tk.WORD, width=60, height=20)
 result_text.pack(pady=10)
 
-# List to keep track of server variables
+# Initialize list for server variables
 server_vars = []
 
-# Run the main application loop
+# Fetch servers from the database
+fetch_servers()
+
+# Start the application
 root.mainloop()
