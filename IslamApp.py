@@ -9,7 +9,7 @@ import datetime
 import socket
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+#ADD
 # Function to execute the remote script on the server using SSH
 def execute_remote_script(server_ip, port, username, password, script_path):
     try:
